@@ -156,14 +156,31 @@ def update_drink(payload, id):
     returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
         or appropriate status code indicating reason for failure
 '''
-
+@app.route('/drinks/<int:id>', methods=['DELETE'])
+@requires_auth('delete:drinks')
+def delete_drink(payload, id):
+    # Get the drink with requested id
+    drink = Drink.query.filter(Drink.id == id).one_or_none()
+    
+    # if no drink with given id abort
+    if not drink:
+        abort(404)
+        
+    try:
+        # delete te drink
+        drink.delete()
+    except Exception:
+        abort(400)
+    
+    return jsonify({
+        'success': True,
+        'deleted': id
+    }), 200
 
 # Error Handling
 '''
 Example error handling for unprocessable entity
 '''
-
-
 @app.errorhandler(422)
 def unprocessable(error):
     return jsonify({
@@ -183,6 +200,50 @@ def unprocessable(error):
                     }), 404
 
 '''
+@app.errorhandler(404)
+def  not_found(error):
+    return jsonify({
+        "success": False,
+        "error": 404,
+        "message": "resource not found"
+    }), 404
+    
+    
+@app.errorhandler(401)
+def  unathorized(error):
+    return jsonify({
+        "success": False,
+        "error": 401,
+        "message": "unauthorized"
+    }), 401
+    
+    
+@app.errorhandler(500)
+def  internal_server_error(error):
+    return jsonify({
+        "success": False,
+        "error": 500,
+        "message": "internal server errror"
+    }), 500
+    
+    
+@app.errorhandler(400)
+def  bad_request(error):
+    return jsonify({
+        "success": False,
+        "error": 400,
+        "message": "bad request"
+    }), 400
+    
+    
+@app.errorhandler(405)
+def  method_not_allowed(error):
+    return jsonify({
+        "success": False,
+        "error": 405,
+        "message": "method not allowed"
+    }), 405
+    
 
 '''
 @TODO implement error handler for 404
@@ -194,3 +255,14 @@ def unprocessable(error):
 @TODO implement error handler for AuthError
     error handler should conform to general task above
 '''
+@app.errorhandler(AuthError)
+def auth_error(error):
+    return jsonify({
+        'success': False,
+        'error': 401,
+        'message': 'unauthorized'
+    }), 401
+
+if __name__ == '__main__':
+    app.debug = True
+    app.run()
