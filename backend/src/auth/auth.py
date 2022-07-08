@@ -31,16 +31,15 @@ class AuthError(Exception):
     return the token part of the header
 '''
 def get_token_auth_header():
-    # Get authorization header
-    auth_header = request.headers['Authorization']
-    
     # Check authorization header if available
-    if not auth_header:
+    if 'Authorization' not in request.headers:
         raise AuthError({
             'code': 'authorization_header_missing',
             'description': 'Authorization header is expected'
         }, 401)
-    
+        
+    # Get authorization header
+    auth_header = request.headers['Authorization']
     # Split the authorization header part
     header_parts = auth_header.split(" ")
     
@@ -75,7 +74,17 @@ def get_token_auth_header():
     return true otherwise
 '''
 def check_permissions(permission, payload):
-    raise Exception('Not Implemented')
+    # check permission in JWT
+    if 'permissions' not in payload:
+        abort(400)
+    
+    # check if user has permission to acces the rescuers
+    if permission not in payload['permissions']:
+        raise AuthError({
+            'code': 'unauthorized',
+            'description': 'permission not found'
+        }, 401)
+    return True
 
 '''
 @TODO implement verify_decode_jwt(token) method
