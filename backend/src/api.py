@@ -1,3 +1,4 @@
+from crypt import methods
 import os
 from flask import Flask, request, jsonify, abort
 from sqlalchemy import exc
@@ -110,7 +111,40 @@ def create_drink(payload):
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the updated drink
         or appropriate status code indicating reason for failure
 '''
-
+@app.route('/drinks/<int:id>', methods=['PATCH'])
+@requires_auth('patch:drinks')
+def update_drink(payload, id):
+    # Get the body
+    body = request.get_json()
+    
+    # Get the drink with requested id
+    drink = Drink.query.filter(Drink.id == id).one_or_none()
+    
+    # if no drink with given id abort
+    if not drink:
+        abort(404)
+        
+    try:
+        body_title = body.get('tittle')
+        body_recipe = body.get('recipe')
+        
+        # check if the title is the one is updated
+        if body_title:
+            drink.title = body_title
+            
+        if body_recipe:
+            drink.recipe = json.dumpd(body['recipe'])
+            
+        # update the drink
+        drink.update()
+        
+    except Exception:
+        abort(400)
+        
+    return jsonify({
+        'success': True,
+        'drinks': [drink.long()]
+    }), 200
 
 '''
 @TODO implement endpoint
