@@ -7,7 +7,7 @@ from urllib.request import urlopen
 
 AUTH0_DOMAIN = 'dev-49k5jftg.us.auth0.com'
 ALGORITHMS = ['RS256']
-API_AUDIENCE = 'dev'
+API_AUDIENCE = 'coffee_shop'
 
 ## AuthError Exception
 '''
@@ -31,18 +31,35 @@ class AuthError(Exception):
     return the token part of the header
 '''
 def get_token_auth_header():
-    if 'Authorization' not in request.headers:
-        # raise Exception('Not Implemented')
-        raise AuthError
-        
+    # Get authorization header
     auth_header = request.headers['Authorization']
+    
+    # Check authorization header if available
+    if not auth_header:
+        raise AuthError({
+            'code': 'authorization_header_missing',
+            'description': 'Authorization header is expected'
+        }, 401)
+    
+    # Split the authorization header part
     header_parts = auth_header.split(" ")
     
+    # Confirm the header part if it's exactly two
     if len(header_parts) != 2:
-        raise AuthError
+        raise AuthError({
+            'code': 'invalid_header',
+            'description': 'Authorization must be bearer token'
+        }, 401)
+        
+    # check if it's bearer token
     elif header_parts[0].lower != 'bearer':
-        raise AuthError
-    return header_parts
+        raise AuthError({
+            'code': 'invalid_header',
+            'description': 'Authorization header must start with "Bearer'
+        })
+    
+    token = header_parts[1]
+    return token
     
     
 
